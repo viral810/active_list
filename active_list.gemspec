@@ -11,7 +11,7 @@ Gem::Specification.new do |spec|
   spec.summary       = "Scalable and performant ActiveRecord plugin for managing lists."
   spec.description   = "Scalable and performant ActiveRecord plugin for managing lists."
   spec.homepage      = "https://viralpatel.blog"
-  spec.required_ruby_version = ">= 2.4.0"
+  spec.required_ruby_version = ">= 2.5.0"
 
   # spec.metadata["allowed_push_host"] = "TODO: Set to your gem server 'https://example.com'"
 
