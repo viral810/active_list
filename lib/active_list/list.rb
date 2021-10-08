@@ -17,39 +17,30 @@ module ActiveList
           cols = %i[id position]
           # FIXME: cannot be select all, need to scope down to a specific column, such as parent_id
           # or active: true or should be scoped to multiple columns ideally
-          values_list = self.class.all.select(*cols).each_with_index.reduce({}) do |acc, (record, index)|
-
+          values_list = self.class.all.select(*cols).each_with_index.each_with_object([]) do |(record, index), acc|
             # if updating current record, update to new poisition
             # else just choose the current position
-            acc[record.id] = if record.id == id
-              new_position
-            else
-              record.position || index + 1
-            end
+            pos = if record.id == id
+                    new_position
+                  else
+                    index + 1
+                  end
 
-            acc
+            acc << {
+              id: record.id,
+              position: pos
+            }
           end
 
           # reshuffle
-          values_list = values_list.each do |k, v|
-            next if k == id
+          values_list = values_list.each do |value|
+            next if value[:id] == id
+            next if value[:position] < new_position
 
-            values_list[k] = v + 1 if v >= new_position
+            value[:position] = value[:position] + 1
           end
 
-          values = self.class.connection.visitor.compile(Arel::Nodes::ValuesList.new(values_list))
-          table_name = self.class.table_name
-
-          query = <<~EOS
-            UPDATE #{table_name}
-            SET
-              position = temp_#{table_name}.position::integer
-            FROM (#{values}) AS temp_#{table_name} (id, position)
-            WHERE
-              temp_#{table_name}.id = #{table_name}.id;
-          EOS
-
-          self.class.connection.execute(self.class.sanitize_sql(query))
+          self.class.upsert_all(values_list)
         end
       end
     end
