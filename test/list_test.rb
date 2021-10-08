@@ -4,6 +4,8 @@ require "test_helper"
 
 class Mixin < ActiveRecord::Base
   self.table_name = "mixins"
+
+  act_as_list
 end
 
 module ActiveList
@@ -14,14 +16,13 @@ module ActiveList
     end
 
     def teardown
-      byebug
       teardown_db
     end
 
     def test_insert_at_first_position
       record = Mixin.create
 
-      record.move_to_top
+      record.insert_at_position(1)
     end
   end
 end
