@@ -10,6 +10,8 @@ db_config = YAML.load_file(File.expand_path("database.yml", __dir__)).fetch(ENV[
 ActiveRecord::Base.establish_connection(db_config)
 ActiveRecord::Schema.verbose = false
 
+ActiveRecord::Base.logger = ActiveSupport::Logger.new($stdout)
+
 def teardown_db
   ActiveRecord::Base.connection.data_sources.each do |table|
     ActiveRecord::Base.connection.drop_table(table)
@@ -21,7 +23,7 @@ def setup_db
   sqlite = ENV.fetch("DB", "sqlite") == "sqlite"
 
   # AR caches columns options like defaults etc. Clear them!
-  ActiveRecord::Base.connection.create_table :mixins do |t|
+  ActiveRecord::Base.connection.create_table :list_items do |t|
     t.column :position, :integer unless sqlite
     t.column :active, :boolean, default: true
     t.column :parent_id, :integer
@@ -31,16 +33,15 @@ def setup_db
     t.column :state, :integer
   end
 
-  # TODO: uncomment this line after_create hook is implemented
-  # ActiveRecord::Base.connection.add_index :mixins, :position, unique: true unless sqlite
+  ActiveRecord::Base.connection.add_index :list_items, :position, unique: true unless sqlite
 
   if sqlite
     # SQLite cannot add constraint after table creation, also cannot add unique inside ADD COLUMN
-    ActiveRecord::Base.connection.execute("ALTER TABLE mixins ADD COLUMN position integer8 NOT NULL CHECK (position > 0) DEFAULT 1")
+    ActiveRecord::Base.connection.execute("ALTER TABLE list_items ADD COLUMN position integer8 NOT NULL CHECK (position > 0) DEFAULT 1")
     # TODO: uncomment this line after_create hook is implemented
-    # ActiveRecord::Base.connection.execute("CREATE UNIQUE INDEX index_mixins_on_pos ON mixins(position)")
+    # ActiveRecord::Base.connection.execute("CREATE UNIQUE INDEX index_mixins_on_pos ON list_items(position)")
   else
-    ActiveRecord::Base.connection.execute("ALTER TABLE mixins ADD CONSTRAINT pos_check CHECK (position > 0)")
+    ActiveRecord::Base.connection.execute("ALTER TABLE list_items ADD CONSTRAINT pos_check CHECK (position > 0)")
   end
 
   ActiveRecord::Base.connection.schema_cache.clear!

@@ -3,7 +3,7 @@
 module ActiveList
   module List
     module ClassMethods
-      def act_as_list
+      def active_list
         include ActiveList::List::InstanceMethods
       end
     end
